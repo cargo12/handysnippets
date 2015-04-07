@@ -1,0 +1,40 @@
+set nocompatible
+set tabstop=4
+set expandtab
+set ruler
+set shiftwidth=4
+set autoindent
+set ignorecase
+map <C-Z> <C-Y>
+set smartindent
+set wildmode=longest:full
+set wildmenu
+"au BufNewFile,BufRead *.py set noexpandtab
+au BufNewFile,BufRead *.c,*.cc set tabstop=8
+au BufNewFile,BufRead *.jp set keymap=kana
+au BufNewFile,BufRead nummer.txt set nobackup noswapfile nowritebackup
+au BufNewFile,BufRead *.jmx set syntax=xml
+"set mouse=a
+"colorscheme myblue
+"colorscheme darkblue
+colorscheme desert
+if has("gui_running")
+  " GUI is running or is about to start.
+  " Maximize gvim window.
+  set lines=999 columns=999
+"else
+"  " This is console Vim.
+"  if exists("+lines")
+"    set lines=999
+"  endif
+"  if exists("+columns")
+"    set columns=100
+"  endif
+endif
+
+let g:xml_syntax_folding=1
+au FileType xml setlocal foldmethod=syntax
+
+" highlight search like "*" on "~" but don't jump there
+noremap ~ msHmt`s*`tzt`s
+

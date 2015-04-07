@@ -1,0 +1,3 @@
+changeset = "Changed in {rev}:{node|short}    {date|date}:\n{desc}\n{files}"
+desc = "  {desc}\n"
+file = "  {file}\n"

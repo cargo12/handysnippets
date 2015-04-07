@@ -1,0 +1,5 @@
+using stderr instead of stdout in piping:
+    to achieve something like "2|" which doesn't work, but is in the same vein as "|"
+    ( proc1 3>&1 1>&2- 2>&3- ) | proc2
+
+    e.g. ( mkisofs -help 3>&1 1>&2- 2>&3-  )|vim -R -

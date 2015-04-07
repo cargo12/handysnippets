@@ -1,0 +1,130 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>TEMPLATEGroupId</groupId>
+  <artifactId>TEMPLATEartifactId</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>TEMPLATEartifactId</name>
+  <url>http://maven.apache.org</url>
+
+
+  <developers>
+    <developer>
+      <name>gaidhlig@bitbucket.org</name>
+      <email>gaidhlig@bitbucket.org</email>
+    </developer>
+  </developers>
+
+
+
+
+  <properties>                                                                                                                     
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>                                                             
+    <slf4j.version>1.6.6</slf4j.version>                                                                                           
+    <testng.version>6.1.1</testng.version>                                                                                         
+    <commons.io.version>2.4</commons.io.version>                                                                                   
+  </properties>             
+
+  <dependencies>
+    <dependency>                                                                                                                   
+      <groupId>org.testng</groupId>                                                                                                
+      <artifactId>testng</artifactId>                                                                                              
+      <version>${testng.version}</version>                                                                                         
+      <scope>test</scope>                                                                                                          
+    </dependency>                                                                                                                  
+
+    <dependency>                                                                                                                   
+        <groupId>commons-io</groupId>                                                                                              
+        <artifactId>commons-io</artifactId>                                                                                        
+        <version>${commons.io.version}</version>                                                                                   
+    </dependency>  
+
+    <dependency>                                                                                                                   
+      <groupId>org.slf4j</groupId>                                                                                                 
+      <artifactId>slf4j-api</artifactId>                                                                                           
+      <version>${slf4j.version}</version>                                                                                          
+    </dependency>   
+
+    <dependency>
+      <groupId>com.beust</groupId>
+      <artifactId>jcommander</artifactId>
+      <version>1.29</version>
+    </dependency>
+
+    <dependency> 
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.0.6</version>
+<!-- <scope>provided</scope> --> <!-- otherwise not picked up by maven shade plugin -->
+    </dependency>
+
+    <dependency> 
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>1.0.7</version>
+<!-- <scope>provided</scope> --> <!-- otherwise not picked up by maven shade plugin -->
+    </dependency> 
+
+    <!-- Either slf4j-jdk14 or slf4j-log4j12 or logback-->
+    <!--
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+
+    <dependency> 
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.1</version>
+      <scope>runtime</scope>
+    </dependency>
+    -->
+
+
+  </dependencies>
+
+  <build>                                                                                                                          
+     <plugins>                                                                                                                     
+       <plugin>                                                                                                                    
+         <artifactId>maven-surefire-plugin</artifactId>                                                                            
+         <version>2.12.3</version>                                                                                                 
+         <configuration>                                                                                                           
+           <systemproperties>                                                                                                      
+             <property>                                                                                                            
+               <!-- Specific log4j config for tests -->  
+               <name>log4j.configuration</name>
+               <value>log4j.properties</value>
+             </property>
+           </systemproperties>
+         </configuration>
+       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+   
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>MAINCLASS</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+   </plugins>
+
+  </build>
+
+</project>

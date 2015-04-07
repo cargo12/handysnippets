@@ -1,0 +1,4 @@
+lsof -i -n -P
+pids=`lsof -i -n -P |grep -v "^COMMAND"|awk '{print $2};'|sort -n|uniq`
+echo
+ps uwp ${pids}

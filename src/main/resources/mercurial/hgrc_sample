@@ -1,0 +1,47 @@
+[paths]
+# bitbucket
+#default = https://gaidhlig@bitbucket.org/gaidhlig/handysnippets
+# sourceforge
+#default = ssh://okl@xfer.hg.sourceforge.net/hgroot/xfer/xfer
+#
+[auth]
+<projectname>.prefix = https://bitbucket.org/gaidhlig/<projectname>
+<projectname>.username = gaidhlig
+<projectname>.password = ....
+
+
+[ui]
+#username = okl@users.sourceforge.net
+#username = gaidhlig@bitbucket.org
+editor = vim
+
+[web]
+allow_push = *
+push_ssl = false
+
+
+[merge-patterns]
+** = filemerge
+
+[merge-tools]
+filemerge.executable = gvim
+filemerge.args = -d $local $other
+filemerge.checkchanged = true
+filemerge.gui = true
+
+[extdiff]
+cmd.vimdiff =
+
+[alias]
+vi  = vimdiff
+vim = vimdiff
+
+[extensions]
+hgext.extdiff =
+
+[extdiff]
+cmd.kdiff3 =
+
+[merge-tools]
+kdiff3.args = $base $local $other -o $output
+

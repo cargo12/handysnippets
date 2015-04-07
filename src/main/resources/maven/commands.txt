@@ -1,0 +1,30 @@
+mvn archetype:generate \
+-DgroupId= \
+-DartifactId= \
+-Dversion=1.0-SNAPSHOT \
+-DpackageName= \
+-DarchetypeGroupId=org.apache.maven.archetypes \
+-DarchetypeArtifactId=maven-archetype-quickstart \
+-DarchetypeVersion=1.0 \
+-DinteractiveMode=false
+
+# scala
+
+    mvn archetype:generate \
+      -DarchetypeGroupId=org.scala-tools.archetypes \
+      -DarchetypeArtifactId=scala-archetype-simple  \
+      -DremoteRepositories=http://scala-tools.org/repo-releases \
+      -DgroupId=bla \
+      -DartifactId=bla \
+      -Dversion=1.0-SNAPSHOT
+
+
+
+mvn versions:set -DnewVersion=1.0
+mvn versions:set -DnewVersion=1.1-SNAPSHOT
+
+
+# unpack sources of all dependencies into target/dependency
+mvn dependency:unpack-dependencies
+  -Dclassifier=sources
+  -Dmdep.failOnMissingClassifierArtifact=false

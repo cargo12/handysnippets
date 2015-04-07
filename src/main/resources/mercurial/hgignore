@@ -1,0 +1,9 @@
+\.*swp$
+\.*class$
+\.*war$
+\.*jar$
+test-output/*
+target/*
+.settings/*
+.classpath$
+.project$

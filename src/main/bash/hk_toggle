@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# starts, minimizes or brings to front a GUI program
+# call with 2 parameters:
+# 1: program executeable name
+# 2: program name as per title bar
+# e.g.: hk_toggle "google-chrome" "google chrome"
+
+set -o nounset
+set -o errexit
+
+[ "$#" != "2" ] && zenity --error --text "hk_toggle needs 2 parameters: program and programName"
+
+prg=$1
+prgname=$2
+activewin=`xdotool getactivewindow getwindowname`
+echo ${activewin} | grep -i "${prgname}" \
+  && xdotool getactivewindow windowminimize \
+  || ( xdotool search "${prgname}" windowactivate --sync windowfocus --sync || ${prg} )
+
+

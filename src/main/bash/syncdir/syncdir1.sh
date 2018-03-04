@@ -17,6 +17,9 @@ rcloneopts="-v --stats=20s"
 rsyncopts="--archive --stats --delete --progress"
 readonly delay="15s"
 readonly popupduration=5000
+readonly configdir=$HOME/.config/syncdir
+LOG=${configdir}/log_syncdir1
+readonly DATE='date +%Y-%m-%d_%H:%M:%S'
 id="syncdir1"
 method=${1}
 plaindir=${2}
@@ -26,6 +29,9 @@ url=${4}
 # whether to use rclone (or rsync) (1=rclone, 0=rsync)
 use_rclone=0
 
+function echo_log {
+  echo `$DATE`" $1" |tee -a ${LOG}
+}
 parseoptions() {
   for arg in $*; do
      # Split arg on "=". It is OK to have an "=" in the value, but not
@@ -53,8 +59,11 @@ parseoptions() {
          "--url")
            url=${value}
           ;;
+         "--log")
+           LOG="${value}"
+           ;;
          *)
-          echo `date +"%Y-%m-%d %H:%M:%S"` "Unrecognised option ${key}"
+          echo_log "Unrecognised option ${key}"
               exit 1
      esac
   done
@@ -63,22 +72,22 @@ parseoptions() {
 mountgocrypt() {
   # mount syncdir if necessary
   if [ ! -e "${syncdir}/gocryptfs.diriv" ] ; then
-    echo `date +"%Y-%m-%d %H:%M:%S"` "============ Reverse mounting crypted dir ${syncdir}"
-    echo `date +"%Y-%m-%d %H:%M:%S"` "Enter gocrypt password for ${plaindir} - ${syncdir}:"
+    echo_log "============ Reverse mounting crypted dir ${syncdir}"
+    echo_log "Enter gocrypt password for ${plaindir} - ${syncdir}:"
     gocryptfs -reverse -q "${plaindir}" "${syncdir}" 
   else
-    echo `date +"%Y-%m-%d %H:%M:%S"` "============ Crypted dir already mounted: ${syncdir}"
+    echo_log "============ Crypted dir already mounted: ${syncdir}"
   fi
 }
 
 function finish {
     if [ -n ${waitpid:-''} ] ; then
-    echo `date +"%Y-%m-%d %H:%M:%S"` "--- Cleaning up, killing $waitpid and removing $waitpidfile and ${changedfile}"
+    echo_log "--- Cleaning up, killing $waitpid and removing $waitpidfile and ${changedfile}"
     echo
     rm -rf "${changedfile}" $waitpidfile
     kill $waitpid
   else
-    echo `date +"%Y-%m-%d %H:%M:%S"` "============ Exiting"
+    echo_log "============ Exiting"
   fi
 }
 trap finish EXIT #SIGINT SIGTERM
@@ -105,42 +114,41 @@ unlock() {
 
 readchanges () {
   f="$1"
-  lock changesfile || echo `date +"%Y-%m-%d %H:%M:%S"` "Can\'t lock in readchanges()"
-  echo "============ NOTIFIED CHANGE FOR $f"
+  lock changesfile || echo_log "Can\'t lock in readchanges()"
+  echo_log"============ NOTIFIED CHANGE FOR $f"
   echo $f >> ${changedfile}
-  unlock || echo `date +"%Y-%m-%d %H:%M:%S"` "--- Couldn\'t remove lock"
+  unlock || echo_log "--- Couldn\'t remove lock"
 }
 
 startinotifyw() {
   ( inotifywait -m "${plaindir}" -r -e close_write,create,delete --format %w%f & echo $! >&3 ) 3>$waitpidfile | egrep --line-buffered -v ${ignore} | 
     while read f ; do readchanges "$f" ; done &
   waitpid=$(<$waitpidfile)
-  echo `date +"%Y-%m-%d %H:%M:%S"` "PID of inotifywait ${waitpid}"
-  echo `date +"%Y-%m-%d %H:%M:%S"` "CHANGEDFILE ${changedfile}"
-  echo `date +"%Y-%m-%d %H:%M:%S"` "PIDFILE ${waitpidfile}"
+  echo_log "PID of inotifywait ${waitpid}"
+  echo_log "CHANGEDFILE ${changedfile}"
+  echo_log "PIDFILE ${waitpidfile}"
 }
 
 sync () {
   local force=${1:-0} 
 
-  lock changesfile || echo "Can\'t lock in while"
+  lock changesfile || echo_log"Can\'t lock in while"
   if [ $force = 1 ] || [ -s ${changedfile} ] ; then
     sort ${changedfile} | uniq | while read f ; do 
-      echo `date +"%Y-%m-%d %H:%M:%S"` "============ SYNCING $f"
+      echo_log "============ SYNCING $f"
     done
 
-    echo `date +"%Y-%m-%d %H:%M:%S"` "......................................................."
+    echo_log "......................................................."
     if [ $use_rclone = 1 ] ; then
-      echo `date +"%Y-%m-%d %H:%M:%S"` "============ CALLING rclone at "`date`
-      ${rclone} sync ${rcloneopts} "${syncdir}" "${url}" 2>&1 && notify-send syncdir -t $popupduration "OK `date +%H:%M:%S` ${syncdir}" || notify-send -u critical "syncdir ERR" --icon=${icon}
+      echo_log "============ CALLING rclone"
+      ${rclone} sync ${rcloneopts} "${syncdir}" "${url}" 2>&1 | tee -a "${LOG}" && notify-send syncdir -t $popupduration "OK `date +%H:%M:%S` ${syncdir}" || notify-send -u critical "syncdir ERR" --icon=${icon} 2>&1 | tee -a "${LOG}"
     else
-      echo `date +"%Y-%m-%d %H:%M:%S"` "============ CALLING rsync at "`date` " with options ${rsyncopts}"
-      #rsync -avi --delete --progress ${syncdir}/ "${user}@${remote}:${remotepath}" | grep -E '^[^.]|^$'
-      rsync ${rsyncopts} ${syncdir}/ "${url}" && notify-send syncdir -t $popupduration "OK `date +%H:%M:%S` ${plaindir}" || notify-send -u critical "syncdir ERR" --icon=${icon}
+      echo_log "============ CALLING rsync at with options ${rsyncopts}"
+      rsync ${rsyncopts} ${syncdir}/ "${url}" 2>&1 | tee -a "${LOG}" && notify-send syncdir -t $popupduration "OK `date +%H:%M:%S` ${plaindir}" || notify-send -u critical "syncdir ERR" --icon=${icon}
     fi
     rm -f ${changedfile}
   fi
-  unlock || echo `date +"%Y-%m-%d %H:%M:%S"` "--- Couldn\'t remove lock"
+  unlock || echo_log "--- Couldn\'t remove lock"
 }
 
 main() {
@@ -164,7 +172,7 @@ main() {
   while true ; do
     sleep $delay
 
-    echo `date +"%Y-%m-%d %H:%M:%S"` " [$$] checking ${id} ${plaindir}"
+    echo_log " [$$] checking ${id} ${plaindir}"
     sync
 
   done

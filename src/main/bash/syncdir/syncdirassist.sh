@@ -13,7 +13,8 @@ set -o errexit
 # ./syncdir.sh --rsync --plaindir=<dirtowatch> --syncdir=<syncdir> --user=<username> --remote=<remotename> --remotepath=<remotedir>
 
 readonly syncdirprog=syncdir1.sh
-readonly autostartsfile=$HOME/.config/syncdir/autostarts
+readonly configdir=$HOME/.config/syncdir
+readonly autostartsfile=${configdir}/autostarts
 declare -A ids
 declare -A methods
 declare -A plaindirs
@@ -24,15 +25,22 @@ dryrun=""
 idtosync=""
 showconfig=0
 
+readonly DATE='date +%Y-%m-%d_%H:%M:%S'
+# log file
+LOG=${configdir}/log
+function echo_log {
+  echo `$DATE`" $2" |tee -a ${LOG}_${1}
+}
+
 loadConfig() {
   if [ -e "${autostartsfile}" ] ; then
-    echo `date +"%Y-%m-%d %H:%M:%S"` "============ Reading config from ${autostartsfile}"
+    echo_log ""  "============ Reading config from ${autostartsfile}"
     local lineNo=1
     while read line || [[ -n "$line" ]]; do
       IFS=\; read id method ldir sdir rurl <<< "${line}"
 
       if [ -z "${id}" ] || [ -z "${method}" ] || [ -z "${ldir}" ] || [ -z "${sdir}" ] || [ -z "${rurl}" ] ; then
-        echo `date +"%Y-%m-%d %H:%M:%S"` ============ incorrect config file in line ${lineNo}
+        echo_log ""  ============ incorrect config file in line ${lineNo}
         exit 1
       fi
 
@@ -60,24 +68,17 @@ mountgocrypt() {
     local syncdir=${syncdirs[${id}]}
     local plaindir=${plaindirs[${id}]}
     if [ ! -e "${syncdir}/gocryptfs.diriv" ] ; then
-      echo `date +"%Y-%m-%d %H:%M:%S"` "============ Reverse mounting crypted dir ${syncdir}"
-      echo `date +"%Y-%m-%d %H:%M:%S"` "Enter gocrypt password for ${plaindir} - ${syncdir}:"
+      echo_log "${id}"  "============ Reverse mounting crypted dir ${syncdir}"
+      echo_log "${id}"  "Enter gocrypt password for ${plaindir} - ${syncdir}:"
       gocryptfs -reverse -q "${plaindir}" "${syncdir}" 
     else
-      echo `date +"%Y-%m-%d %H:%M:%S"` "============ Crypted dir already mounted: ${syncdir}"
+      echo_log "${id}"  "============ Crypted dir already mounted: ${syncdir}"
     fi
   fi
 }
 
 function finish {
-    if [ -n ${waitpid:-''} ] ; then
-    echo `date +"%Y-%m-%d %H:%M:%S"` "--- Cleaning up, killing $waitpid and removing $changedfile"
-    echo
-    rm -rf "${changedfile}" $waitpidfile
-    kill $waitpid
-  else
-    echo `date +"%Y-%m-%d %H:%M:%S"` "============ Exiting"
-  fi
+  echo_log ""  "============ Exiting"
 }
 trap finish EXIT
 
@@ -97,6 +98,9 @@ parseoptions() {
            ;;
          "--showconfig")
            showconfig=1
+           ;;
+         "--log")
+           LOG="${value}"
            ;;
          *)
           echo `date +"%Y-%m-%d %H:%M:%S"` "Unrecognised option ${key}"
@@ -133,8 +137,8 @@ main() {
     local url=${urls[${id}]}
     if [ "${id}" = "${idtosync}" ] ; then
       mountgocrypt ${id}
-      echo `date +"%Y-%m-%d %H:%M:%S"` "===== Calling syncdir.sh for [$id]"
-      ${syncdirprog} ${dryrun} --id="${id}" --method="${method}" --plaindir="${plaindir}" --syncdir="${syncdir}" --url="${url}"
+      echo_log ""  "===== Calling syncdir.sh for [$id]"
+      ${syncdirprog} ${dryrun} --id="${id}" --method="${method}" --plaindir="${plaindir}" --syncdir="${syncdir}" --url="${url}" --log=${LOG}_${id}
     fi
 
   done
